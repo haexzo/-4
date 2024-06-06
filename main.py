@@ -148,6 +148,10 @@ start_time_label.pack(pady=5)
 stop_time_label = tk.Label(root, text="")
 stop_time_label.pack(pady=5)
 
+#모든 학생 시간 초기화
+reset_alltime_button = tk.Button(root, text="모든학생 시간 초기화", command=reset_alltime)
+reset_alltime_button.pack(pady=5)
+
 # 이번 공부 시간 표시 레이블
 today_total_study_time_label = tk.Label(root, text="")
 today_total_study_time_label.pack(pady=5)
