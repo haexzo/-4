@@ -1,3 +1,6 @@
+#pip install tkinter
+#pip install datetime
+
 import tkinter as tk
 from datetime import datetime
 
@@ -114,6 +117,16 @@ def show_stop_time():
     else:
         stop_time_label.config(text="시작 시간을 먼저 입력하세요.")
         stop_button.pack_forget()
+
+def reset_alltime(barcode):
+    updated_lines = []
+    with open(text_file_path, 'r', encoding='utf-8') as file:
+        for line in file:
+            data = line.strip().split(',')
+            if data[0] == barcode:
+                total_seconds = 0
+                data[2] = seconds_to_time(total_seconds)
+            updated_lines.append(','.join(data))
 
 # GUI 생성
 root = tk.Tk()
