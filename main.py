@@ -1,6 +1,3 @@
-#pip install tkinter
-#pip install datetime
-
 import tkinter as tk
 from datetime import datetime
 
@@ -77,8 +74,6 @@ def show_student_info():
 
         if barcode in stop_times:
             stop_time_label.config(text=f"종료 시간: {stop_times[barcode].strftime('%H:%M:%S')}")
-            start_button.pack(pady=5)  # 시작 버튼 표시
-            stop_button.pack_forget()
             if barcode in study_duration:
                 today_total_study_time_label.config(text=f"이번 공부 시간: {study_duration[barcode]}")
             else:
@@ -118,15 +113,53 @@ def show_stop_time():
         stop_time_label.config(text="시작 시간을 먼저 입력하세요.")
         stop_button.pack_forget()
 
-def reset_alltime(barcode):
+# 모든 학생 시간 초기화 함수
+def reset_all_time():
     updated_lines = []
     with open(text_file_path, 'r', encoding='utf-8') as file:
         for line in file:
             data = line.strip().split(',')
-            if data[0] == barcode:
-                total_seconds = 0
-                data[2] = seconds_to_time(total_seconds)
+            data[2] = "0시간 0분 0초"
             updated_lines.append(','.join(data))
+    with open(text_file_path, 'w', encoding='utf-8') as file:
+        for line in updated_lines:
+            file.write(line + '\n')
+    # 모든 레이블 초기화
+    start_times.clear()
+    stop_times.clear()
+    study_duration.clear()
+    student_name_label.config(text="")
+    start_time_label.config(text="")
+    stop_time_label.config(text="")
+    today_total_study_time_label.config(text="")
+    total_study_time_label.config(text="")
+    barcode_entry.delete(0, tk.END)
+
+# 순위 표시 함수
+def show_ranking():
+    students = []
+    with open(text_file_path, 'r', encoding='utf-8') as file:
+        for line in file:
+            data = line.strip().split(',')
+            if len(data) > 2:
+                total_time_seconds = time_to_seconds(data[2])
+                students.append((data[1], total_time_seconds))
+
+    # 총 공부 시간에 따라 정렬
+    students.sort(key=lambda x: x[1], reverse=True)
+    
+    # 새로운 창에 순위 표시
+    ranking_window = tk.Toplevel(root)
+    ranking_window.title("학생 순위")
+    ranking_window.geometry('300x300')
+
+    rank_label = tk.Label(ranking_window, text="학생 순위", font=("Arial", 16))
+    rank_label.pack(pady=10)
+
+    for idx, (name, total_seconds) in enumerate(students):
+        rank_text = f"{idx + 1}위: {name} - {seconds_to_time(total_seconds)}"
+        student_rank_label = tk.Label(ranking_window, text=rank_text)
+        student_rank_label.pack()
 
 # GUI 생성
 root = tk.Tk()
@@ -161,16 +194,21 @@ start_time_label.pack(pady=5)
 stop_time_label = tk.Label(root, text="")
 stop_time_label.pack(pady=5)
 
-#모든 학생 시간 초기화
-reset_alltime_button = tk.Button(root, text="모든학생 시간 초기화", command=reset_alltime)
-reset_alltime_button.pack(pady=5)
-
 # 이번 공부 시간 표시 레이블
 today_total_study_time_label = tk.Label(root, text="")
 today_total_study_time_label.pack(pady=5)
 
+# 총 공부 시간 표시 레이블
 total_study_time_label = tk.Label(root, text="")
 total_study_time_label.pack(pady=5)
+
+# 순위 보기 버튼
+ranking_button = tk.Button(root, text="순위 보기", command=show_ranking)
+ranking_button.pack(pady=5)
+
+# 모든 학생 시간 초기화 버튼
+reset_all_time_button = tk.Button(root, text="모든 학생 시간 초기화", command=reset_all_time)
+reset_all_time_button.place(relx=1.0, rely=1.0, anchor='se', x=-10, y=-10)
 
 # GUI 실행
 root.mainloop()
