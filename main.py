@@ -180,8 +180,12 @@ def show_ranking():
 # 바코드 입력 시 자동 확인 함수
 def on_barcode_entry_change(*args):
     barcode = barcode_var.get()
-    if len(barcode) == 6:
-        show_student_info()
+    if barcode.isdecimal():
+        if len(barcode) == 6:
+            show_student_info()
+    else:
+        if len(barcode) == 5:
+            show_student_info()
 
 # GUI 생성
 root = tk.Tk()
@@ -230,6 +234,7 @@ total_study_time_label.pack(pady=5)
 # 순위 보기 버튼
 ranking_button = tk.Button(root, text="순위 보기", command=show_ranking)
 ranking_button.pack(pady=5)
+
 
 # 모든 학생 시간 초기화 버튼
 reset_all_time_button = tk.Button(root, text="모든 학생 시간 초기화", command=reset_time_conform)
