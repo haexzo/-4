@@ -113,6 +113,22 @@ def show_stop_time():
         stop_time_label.config(text="시작 시간을 먼저 입력하세요.")
         stop_button.pack_forget()
 
+# 시간 초기화 확인 창
+def reset_time_conform():
+    conform_window = tk.Toplevel(root)
+    conform_window.title("확인 창")
+    conform_window.geometry('300x300')
+
+    conform_label = tk.Label(conform_window, text="정말 초기화 하시겠습니까?", font=("Arial", 16))
+    conform_label.pack(pady=10)
+    conform_button = tk.Button(conform_window, text="확인", command=lambda: [reset_all_time(), quit(conform_window)])
+    conform_button.pack(pady=10)
+
+# 창 닫기
+def quit(conform_window):
+    conform_window.destroy()
+    
+
 # 모든 학생 시간 초기화 함수
 def reset_all_time():
     updated_lines = []
@@ -161,6 +177,12 @@ def show_ranking():
         student_rank_label = tk.Label(ranking_window, text=rank_text)
         student_rank_label.pack()
 
+# 바코드 입력 시 자동 확인 함수
+def on_barcode_entry_change(*args):
+    barcode = barcode_var.get()
+    if len(barcode) == 6:
+        show_student_info()
+
 # GUI 생성
 root = tk.Tk()
 root.title("시간측정 프로그램")
@@ -169,7 +191,10 @@ root.geometry('400x400')
 # 바코드 입력 필드
 barcode_label = tk.Label(root, text="바코드를 입력하세요:")
 barcode_label.pack(pady=5)
-barcode_entry = tk.Entry(root, width=40)
+
+barcode_var = tk.StringVar()
+barcode_var.trace('w', on_barcode_entry_change)
+barcode_entry = tk.Entry(root, width=40, textvariable=barcode_var)
 barcode_entry.pack(pady=5)
 
 # 학생 이름 표시 레이블
@@ -207,7 +232,7 @@ ranking_button = tk.Button(root, text="순위 보기", command=show_ranking)
 ranking_button.pack(pady=5)
 
 # 모든 학생 시간 초기화 버튼
-reset_all_time_button = tk.Button(root, text="모든 학생 시간 초기화", command=reset_all_time)
+reset_all_time_button = tk.Button(root, text="모든 학생 시간 초기화", command=reset_time_conform)
 reset_all_time_button.place(relx=1.0, rely=1.0, anchor='se', x=-10, y=-10)
 
 # GUI 실행
