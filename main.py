@@ -9,13 +9,13 @@ start_times = {}
 stop_times = {}
 study_duration = {}
 
-# 함수: 바코드로 학생 정보 찾기
-def find_student(barcode):
+# 함수: 이름으로 학생 정보 찾기
+def find_student(student_name):
     with open(text_file_path, 'r', encoding='utf-8') as file:
         for line in file:
             data = line.strip().split(',')
-            if data[0] == barcode:
-                return data[1], data[2] if len(data) > 2 else "0시간 0분 0초"
+            if data[1] == student_name:
+                return data[0], data[2] if len(data) > 2 else "0시간 0분 0초"
     return None, None
 
 # 함수: 시간 문자열을 초로 변환
@@ -55,16 +55,16 @@ def update_student_time(barcode, additional_time):
 
 # 함수: 학생 이름 및 버튼 표시
 def show_student_info():
-    global current_barcode, current_student_name, current_total_time
-    barcode = barcode_entry.get()
-    student_name, total_time = find_student(barcode)
-    if student_name:
-        current_barcode = barcode
+    global current_student_name, current_student_number, current_total_time
+    student_name = barcode_entry.get()
+    student_number, total_time = find_student(student_name)
+    if student_number:
         current_student_name = student_name
+        current_student_number = student_number
         current_total_time = total_time
-        student_name_label.config(text=f"학생 이름: {student_name}")
-        if barcode in start_times:
-            start_time_label.config(text=f"시작 시간: {start_times[barcode].strftime('%H:%M:%S')}")
+        student_name_label.config(text=f"학생 이름: {student_name} ({student_number})")
+        if student_number in start_times:
+            start_time_label.config(text=f"시작 시간: {start_times[student_number].strftime('%H:%M:%S')}")
             start_button.pack_forget()
             stop_button.pack(pady=5)  # 종료 버튼 표시
         else:
@@ -72,10 +72,10 @@ def show_student_info():
             start_button.pack(pady=5)  # 시작 버튼 표시
             stop_button.pack_forget()
 
-        if barcode in stop_times:
-            stop_time_label.config(text=f"종료 시간: {stop_times[barcode].strftime('%H:%M:%S')}")
-            if barcode in study_duration:
-                today_total_study_time_label.config(text=f"이번 공부 시간: {study_duration[barcode]}")
+        if student_number in stop_times:
+            stop_time_label.config(text=f"종료 시간: {stop_times[student_number].strftime('%H:%M:%S')}")
+            if student_number in study_duration:
+                today_total_study_time_label.config(text=f"이번 공부 시간: {study_duration[student_number]}")
             else:
                 today_total_study_time_label.config(text="이번 공부 시간은 아직 측정되지 않았습니다.")
         else:
@@ -83,31 +83,36 @@ def show_student_info():
         
         total_study_time_label.config(text=f"저장된 총 공부 시간: {total_time}")
     else:
-        student_name_label.config(text="바코드를 찾을 수 없습니다.")
+        student_name_label.config(text="학생을 찾을 수 없습니다.")
+        start_time_label.config(text="")
+        stop_time_label.config(text="")
+        today_total_study_time_label.config(text="")
+        total_study_time_label.config(text="")
         start_button.pack_forget()
         stop_button.pack_forget()
 
 # 함수: 시작 시간 표시
 def show_start_time():
-    barcode = barcode_entry.get()
-    start_times[barcode] = datetime.now()
-    start_time_label.config(text=f"시작 시간: {start_times[barcode].strftime('%H:%M:%S')}")
-    start_button.pack_forget()
-    stop_button.pack(pady=5)  # 종료 버튼 표시
+    student_name = barcode_entry.get()
+    student_number, _ = find_student(student_name)
+    if student_number:
+        start_times[student_number] = datetime.now()
+        start_time_label.config(text=f"시작 시간: {start_times[student_number].strftime('%H:%M:%S')}")
+        start_button.pack_forget()
+        stop_button.pack(pady=5)  # 종료 버튼 표시
 
 # 함수: 종료 시간 표시 및 총 공부 시간 계산
 def show_stop_time():
-    barcode = barcode_entry.get()
-    stop_times[barcode] = datetime.now()
-    if barcode in start_times:
-        stop_time_label.config(text=f"종료 시간: {stop_times[barcode].strftime('%H:%M:%S')}")
-        study_duration[barcode] = stop_times[barcode] - start_times[barcode]
-        duration_seconds = study_duration[barcode].total_seconds()
+    student_name = barcode_entry.get()
+    student_number, _ = find_student(student_name)
+    if student_number and student_number in start_times:
+        stop_times[student_number] = datetime.now()
+        stop_time_label.config(text=f"종료 시간: {stop_times[student_number].strftime('%H:%M:%S')}")
+        study_duration[student_number] = stop_times[student_number] - start_times[student_number]
+        duration_seconds = study_duration[student_number].total_seconds()
         today_total_study_time_label.config(text=f"이번 공부 시간: {seconds_to_time(duration_seconds)}")
         # 바코드와 총 공부 시간을 텍스트 파일에 기록
-        update_student_time(barcode, duration_seconds)
-        start_button.pack(pady=5)
-        stop_button.pack_forget()
+        update_student_time(student_number, duration_seconds)
         show_student_info()
     else:
         stop_time_label.config(text="시작 시간을 먼저 입력하세요.")
@@ -129,9 +134,6 @@ def reset_time_conform():
 # 창 닫기
 def quit_conform(conform_window):
     conform_window.destroy()
-
-def clear_entry():
-    barcode_entry.delete(0, 'end')  # 0부터 'end'까지의 텍스트를 삭제
 
 # 모든 학생 시간 초기화 함수
 def reset_all_time():
@@ -181,49 +183,30 @@ def show_ranking():
         student_rank_label = tk.Label(ranking_window, text=rank_text)
         student_rank_label.pack()
 
-# 바코드 입력 시 자동 확인 함수
-def on_barcode_entry_change(*args):
-    barcode = barcode_var.get()
-    if barcode.isdecimal():
-        if len(barcode) == 6:
-            show_student_info()
-            if a== 1:
-                if barcode in start_times:
-                    show_stop_time()
-                else:
-                    show_start_time()
-    else:
-        if len(barcode) == 5:
-            show_student_info()
-            if a == 1:
-                if barcode in start_times:
-                    show_stop_time()
-                else:
-                    show_start_time()
+# 학생 이름 선택
+def on_student_select(event):
+    selected_student = event.widget.get(event.widget.curselection())
+    student_number, student_name, _ = selected_student.split(' - ')
+    show_student_info(student_number, student_name)
 
-# 자동 시간 측정
-def auto_time():
-    global a
-    if a == 0:
-        auto_time_finish_button.place(relx=1.0, rely=1.0, anchor='se', x=-270, y=-10)
-        auto_time_start_button.place_forget()
-        a = 1
-    else:
-        auto_time_start_button.place(relx=1.0, rely=1.0, anchor='se', x=-270, y=-10)
-        auto_time_finish_button.place_forget()
-        a = 0
+# 이름 입력 시 목록 표시
+def update_student_list(*args):
+    search_term = barcode_var.get()
+    matches = find_student(search_term)
+    student_listbox.delete(0, tk.END)
+    for student_number, student_name, _ in matches:
+        student_listbox.insert(tk.END, f"{student_name} - {student_number}")
 
 # GUI 생성
 root = tk.Tk()
 root.title("시간측정 프로그램")
-root.geometry('400x400')
+root.geometry('600x500')
 
-# 바코드 입력 필드
-barcode_label = tk.Label(root, text="바코드를 입력하세요:")
+# 입력창 필드
+barcode_label = tk.Label(root, text="이름을 입력하세요")
 barcode_label.pack(pady=5)
 
 barcode_var = tk.StringVar()
-barcode_var.trace('w', on_barcode_entry_change)
 barcode_entry = tk.Entry(root, width=40, textvariable=barcode_var)
 barcode_entry.pack(pady=5)
 
@@ -265,14 +248,14 @@ ranking_button.pack(pady=5)
 reset_all_time_button = tk.Button(root, text="모든 학생 시간 초기화", command=reset_time_conform)
 reset_all_time_button.place(relx=1.0, rely=1.0, anchor='se', x=-10, y=-10)
 
-# 자동 시간 측정 버튼
-a = 0
-auto_time_start_button = tk.Button(root, text="자동 시간 측정 켜기", command=auto_time)
-auto_time_start_button.place(relx=1.0, rely=1.0, anchor='se', x=-270, y=-10)
+# 학생 이름 목록
+student_listbox = tk.Listbox(root, height=5)
+student_listbox.pack(pady=5)
+student_listbox.bind('<<ListboxSelect>>', on_student_select)
 
-# 자동 시간 측정 종료 버튼 (처음에는 표시되지 않음)
-auto_time_finish_button = tk.Button(root, text="자동 시간 측정 끄기", command=auto_time)
-auto_time_finish_button.place_forget()
+# 학생 이름 표시 레이블
+student_name_label = tk.Label(root, text="")
+student_name_label.pack(pady=5)
 
 # GUI 실행
 root.mainloop()
