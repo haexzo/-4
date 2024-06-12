@@ -1,21 +1,22 @@
 import tkinter as tk
 from datetime import datetime
+from ttkthemes import ThemedTk  # type: ignore
 
 # 텍스트 파일 경로
 text_file_path = 'student_data.txt'
 
-# 학생 시간 저장용 사전
+# 학생 시간 저장용 배열
 start_times = {}
 stop_times = {}
 study_duration = {}
 
 # 함수: 이름으로 학생 정보 찾기
-def find_student(student_name):
+def find_student(student_number):
     with open(text_file_path, 'r', encoding='utf-8') as file:
         for line in file:
             data = line.strip().split(',')
-            if data[1] == student_name:
-                return data[0], data[2] if len(data) > 2 else "0시간 0분 0초"
+            if data[0] == student_number:
+                return data[1], data[2] if len(data) > 2 else "0시간 0분 0초"
     return None, None
 
 # 함수: 시간 문자열을 초로 변환
@@ -34,20 +35,20 @@ def seconds_to_time(seconds):
     return f"{int(hours)}시간 {int(minutes)}분 {int(seconds)}초"
 
 # 함수: 학생 정보 업데이트
-def update_student_time(barcode, additional_time):
+def update_student_time(student_number, additional_time):
     updated_lines = []
     found = False
     with open(text_file_path, 'r', encoding='utf-8') as file:
         for line in file:
             data = line.strip().split(',')
-            if data[0] == barcode:
+            if data[0] == student_number:
                 existing_time_seconds = time_to_seconds(data[2]) if len(data) > 2 else 0
                 total_seconds = existing_time_seconds + additional_time
                 data[2] = seconds_to_time(total_seconds)
                 found = True
             updated_lines.append(','.join(data))
     if not found:
-        print(f"Barcode {barcode} not found in the file.")
+        print(f"Barcode {student_number} not found in the file.")
     else:
         with open(text_file_path, 'w', encoding='utf-8') as file:
             for line in updated_lines:
@@ -56,22 +57,19 @@ def update_student_time(barcode, additional_time):
 # 함수: 학생 이름 및 버튼 표시
 def show_student_info():
     global current_student_name, current_student_number, current_total_time
-    student_name = barcode_entry.get()
-    student_number, total_time = find_student(student_name)
-    if student_number:
+    student_number = barcode_entry.get()
+    student_name, total_time = find_student(student_number)
+    if student_name:
         current_student_name = student_name
         current_student_number = student_number
         current_total_time = total_time
         student_name_label.config(text=f"학생 이름: {student_name} ({student_number})")
+        start_button.place(x=190, y=300)
+        stop_button.place(x=320, y=300)
         if student_number in start_times:
             start_time_label.config(text=f"시작 시간: {start_times[student_number].strftime('%H:%M:%S')}")
-            start_button.pack_forget()
-            stop_button.pack(pady=5)  # 종료 버튼 표시
         else:
             start_time_label.config(text="아직 시작 시간이 측정되지 않았습니다.")
-            start_button.pack(pady=5)  # 시작 버튼 표시
-            stop_button.pack_forget()
-
         if student_number in stop_times:
             stop_time_label.config(text=f"종료 시간: {stop_times[student_number].strftime('%H:%M:%S')}")
             if student_number in study_duration:
@@ -80,7 +78,6 @@ def show_student_info():
                 today_total_study_time_label.config(text="이번 공부 시간은 아직 측정되지 않았습니다.")
         else:
             stop_time_label.config(text="아직 종료 시간이 측정되지 않았습니다.")
-        
         total_study_time_label.config(text=f"저장된 총 공부 시간: {total_time}")
     else:
         student_name_label.config(text="학생을 찾을 수 없습니다.")
@@ -88,23 +85,17 @@ def show_student_info():
         stop_time_label.config(text="")
         today_total_study_time_label.config(text="")
         total_study_time_label.config(text="")
-        start_button.pack_forget()
-        stop_button.pack_forget()
 
 # 함수: 시작 시간 표시
 def show_start_time():
-    student_name = barcode_entry.get()
-    student_number, _ = find_student(student_name)
+    student_number = barcode_entry.get()
     if student_number:
         start_times[student_number] = datetime.now()
         start_time_label.config(text=f"시작 시간: {start_times[student_number].strftime('%H:%M:%S')}")
-        start_button.pack_forget()
-        stop_button.pack(pady=5)  # 종료 버튼 표시
 
 # 함수: 종료 시간 표시 및 총 공부 시간 계산
 def show_stop_time():
-    student_name = barcode_entry.get()
-    student_number, _ = find_student(student_name)
+    student_number = barcode_entry.get()
     if student_number and student_number in start_times:
         stop_times[student_number] = datetime.now()
         stop_time_label.config(text=f"종료 시간: {stop_times[student_number].strftime('%H:%M:%S')}")
@@ -116,7 +107,6 @@ def show_stop_time():
         show_student_info()
     else:
         stop_time_label.config(text="시작 시간을 먼저 입력하세요.")
-        stop_button.pack_forget()
 
 # 시간 초기화 확인 창
 def reset_time_conform():
@@ -141,7 +131,11 @@ def reset_all_time():
     with open(text_file_path, 'r', encoding='utf-8') as file:
         for line in file:
             data = line.strip().split(',')
-            data[2] = "0시간 0분 0초"
+            if len(data) > 2:
+                data[2] = "0시간 0분 0초"
+            else:
+                # Ensure the data has three elements if it doesn't already
+                data.append("0시간 0분 0초")
             updated_lines.append(','.join(data))
     with open(text_file_path, 'w', encoding='utf-8') as file:
         for line in updated_lines:
@@ -183,27 +177,13 @@ def show_ranking():
         student_rank_label = tk.Label(ranking_window, text=rank_text)
         student_rank_label.pack()
 
-# 학생 이름 선택
-def on_student_select(event):
-    selected_student = event.widget.get(event.widget.curselection())
-    student_number, student_name, _ = selected_student.split(' - ')
-    show_student_info(student_number, student_name)
-
-# 이름 입력 시 목록 표시
-def update_student_list(*args):
-    search_term = barcode_var.get()
-    matches = find_student(search_term)
-    student_listbox.delete(0, tk.END)
-    for student_number, student_name, _ in matches:
-        student_listbox.insert(tk.END, f"{student_name} - {student_number}")
-
 # GUI 생성
-root = tk.Tk()
+root = ThemedTk(theme="clearlooks")
 root.title("시간측정 프로그램")
 root.geometry('600x500')
 
 # 입력창 필드
-barcode_label = tk.Label(root, text="이름을 입력하세요")
+barcode_label = tk.Label(root, text="학번을 입력하세요")
 barcode_label.pack(pady=5)
 
 barcode_var = tk.StringVar()
@@ -247,15 +227,6 @@ ranking_button.pack(pady=5)
 # 모든 학생 시간 초기화 버튼
 reset_all_time_button = tk.Button(root, text="모든 학생 시간 초기화", command=reset_time_conform)
 reset_all_time_button.place(relx=1.0, rely=1.0, anchor='se', x=-10, y=-10)
-
-# 학생 이름 목록
-student_listbox = tk.Listbox(root, height=5)
-student_listbox.pack(pady=5)
-student_listbox.bind('<<ListboxSelect>>', on_student_select)
-
-# 학생 이름 표시 레이블
-student_name_label = tk.Label(root, text="")
-student_name_label.pack(pady=5)
 
 # GUI 실행
 root.mainloop()
