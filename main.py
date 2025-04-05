@@ -115,9 +115,9 @@ def show_stop_time():
             stop_time_label.config(text=f"종료 시간: {stop_times[student_number].strftime('%H:%M:%S')}")
             study_duration[student_number] = stop_times[student_number] - start_times[student_number]
             duration_seconds = study_duration[student_number].total_seconds()
+            log_study_time(student_name, duration_seconds)  # 로그 추가
             today_total_study_time_label.config(text=f"이번 공부 시간: {seconds_to_time(duration_seconds)}")
             update_student_time(student_name, duration_seconds)
-            log_study_time(student_name, duration_seconds)  # 로그 추가
             show_student_info()
         else:
             stop_time_label.config(text="시작 시간을 먼저 입력하세요.")
