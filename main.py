@@ -1,8 +1,18 @@
 import tkinter as tk
 from datetime import datetime
+import subprocess
+import os
 
 # 텍스트 파일 경로
 text_file_path = 'student_data.txt'
+log_file_path = 'study_log.txt' 
+
+# 프로그램 실행 시 log 파일 자동으로 열기 (Windows 메모장)
+if not os.path.exists(log_file_path):
+    with open(log_file_path, 'w', encoding='utf-8') as f:
+        f.write("==== 공부 기록 로그 ====\n")
+subprocess.Popen(['notepad.exe', log_file_path])  # 메모장으로 로그 열기
+
 
 # 학생 시간 저장용 배열
 start_times = {}
@@ -104,8 +114,8 @@ def show_stop_time():
             study_duration[student_number] = stop_times[student_number] - start_times[student_number]
             duration_seconds = study_duration[student_number].total_seconds()
             today_total_study_time_label.config(text=f"이번 공부 시간: {seconds_to_time(duration_seconds)}")
-            # 이름과 총 공부 시간을 텍스트 파일에 기록
             update_student_time(student_name, duration_seconds)
+            log_study_time(student_name, duration_seconds)  # 로그 추가
             show_student_info()
         else:
             stop_time_label.config(text="시작 시간을 먼저 입력하세요.")
