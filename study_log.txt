@@ -1,1 +1,4 @@
-
+# 로그 파일에 오늘 공부 시간 저장
+log_entry = f"[{datetime.now().strftime('%Y-%m-%d')}] {student_name} - {seconds_to_time(duration_seconds)}\n"
+with open('study_log.txt', 'a', encoding='utf-8') as log_file:
+    log_file.write(log_entry)
